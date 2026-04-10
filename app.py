@@ -1,45 +1,10 @@
-import streamlit as st
+from flask import Flask, render_template, request, jsonify
 import pickle
 import numpy as np
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Crop Predictor India", page_icon="🌾", layout="centered")
-
-# --- CUSTOM CSS FOR PREMIUM GLASSMORHISM LOOK ---
-st.markdown("""
-    <style>
-    .main {
-        background-image: url('https://images.unsplash.com/photo-1500382017468-9049fee74a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-        background-size: cover;
-    }
-    .stApp {
-        background: rgba(0, 0, 0, 0.5); /* Dark overlay */
-    }
-    .css-1r6slb0, .stForm {
-        background: rgba(255, 255, 255, 0.15) !important;
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        padding: 30px;
-        color: white;
-    }
-    h1 {
-        color: #66FF00 !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    .stButton>button {
-        background-color: #46A908 !important;
-        color: white !important;
-        border-radius: 10px;
-        height: 3em;
-        width: 100%;
-        font-weight: bold;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+app = Flask(__name__)
 
 # --- LOAD THE MODEL ---
-@st.cache_resource
 def load_model():
     try:
         with open('crop_model_package.pkl', 'rb') as f:
@@ -49,30 +14,44 @@ def load_model():
 
 package = load_model()
 
-if package:
-    st.title("🌾 Indian Crop Production Predictor")
-    st.write("Professional AI-Powered Agriculture Analytics")
+@app.route('/')
+def home():
+    if not package:
+        return "Error: Model file 'crop_model_package.pkl' not found. Please run 'train_and_save.py' first."
+    
+    # Send lists to the HTML for dropdowns
+    data = {
+        "crops": package['unique_crops'],
+        "states": package['unique_states'],
+        "seasons": package['unique_seasons']
+    }
+    return render_template('index.html', data=data)
 
-    with st.form("prediction_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            crop = st.selectbox("Select Crop", package['unique_crops'])
-            state = st.selectbox("Select State", package['unique_states'])
-        with col2:
-            season = st.selectbox("Select Season", package['unique_seasons'])
-            cost = st.number_input("Cost of Cultivation (INR)", min_value=1000, value=15000)
+@app.route('/predict', methods=['POST'])
+def predict():
+    if not package:
+        return jsonify({"error": "Model not loaded"}), 500
+    
+    try:
+        # Get data from the form (sent as JSON via JavaScript)
+        input_data = request.json
         
-        submit = st.form_submit_button("Predict Production")
+        # 1. Convert text inputs back to numbers using saved Encoders
+        crop_encoded = package['le_crop'].transform([input_data['crop']])[0]
+        state_encoded = package['le_state'].transform([input_data['state']])[0]
+        season_encoded = package['le_season'].transform([input_data['season']])[0]
+        cost = float(input_data['cost'])
+        
+        # 2. Prepare data for model
+        input_array = np.array([[crop_encoded, state_encoded, season_encoded, cost]])
+        
+        # 3. Predict
+        prediction = package['model'].predict(input_array)[0]
+        
+        return jsonify({"prediction": round(prediction, 2)})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-    if submit:
-        # Encode inputs
-        crop_enc = package['le_crop'].transform([crop])[0]
-        state_enc = package['le_state'].transform([state])[0]
-        season_enc = package['le_season'].transform([season])[0]
-        
-        # Predict
-        pred = package['model'].predict(np.array([[crop_enc, state_enc, season_enc, cost]]))[0]
-        
-        st.success(f"### Estimated Production: {pred:.2f} Units")
-else:
-    st.error("Error: 'crop_model_package.pkl' not found. Please upload it to GitHub!")
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
