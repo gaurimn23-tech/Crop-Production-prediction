@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Crop Prediction | Premium AgTech</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <main class="container">
+        <header class="hero">
+            <h1>🌾 Crop Production <span class="accent">Predictor</span></h1>
+            <p>Empowering Indian Farmers with Artificial Intelligence</p>
+        </header>
+
+        <section class="glass-card">
+            <form id="prediction-form">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="crop">Crop Name</label>
+                        <select id="crop" required>
+                            {% for crop in data.crops %}
+                            <option value="{{ crop }}">{{ crop }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="state">State</label>
+                        <select id="state" required>
+                            {% for state in data.states %}
+                            <option value="{{ state }}">{{ state }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="season">Season</label>
+                        <select id="season" required>
+                            {% for season in data.seasons %}
+                            <option value="{{ season }}">{{ season }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cost">Cultivation Cost (INR)</label>
+                        <input type="number" id="cost" placeholder="e.g. 15000" min="1000" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="submit-btn">Predict Production</button>
+            </form>
+
+            <div id="result-area" class="hidden">
+                <hr>
+                <h3>Estimated Production Output:</h3>
+                <div class="prediction-value"><span id="prediction-result">0.00</span> Units</div>
+                <p class="disclaimer">Note: Predictions are based on historical sample data trends.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 Antigravity AI | Advanced Agentic Coding</p>
+        </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
