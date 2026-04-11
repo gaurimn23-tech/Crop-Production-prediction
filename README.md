@@ -27,10 +27,6 @@ The goal of this project is to provide a simple, AI-powered tool for farmers, re
 
   ## 🚀 Live Demo
 You can view the live project here: https://crop-appuction-prediction-xu9vemqv7wmq7espnxuyw9.streamlit.app/
-## 💻 How to Run Locally
 
-If you want to run this project on your own computer:
 
-1. **Clone the Repo**:
-   ```bash
-   git clone https://github.com/your-username/your-repo-name.git
+
